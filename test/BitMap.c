@@ -40,9 +40,11 @@ void dump_mapping(U_64_BYTE * mapper,int size){
 }*/
 int main(int c, char *argv[]) {
 	Bitmap bmprova;
+	unsigned int bit_activation=0;
 	U_64_BYTE *mapper=(U_64_BYTE *)NULL;
 	
 	bmprova.slide1=atol(argv[1]);
+	bit_activation=atoi(argv[2]);
 	bmprova.slide2=(unsigned long)0;
 	printf("DATA %lu\n",(unsigned long) bmprova.slide1);
 	mapper= (U_64_BYTE * ) &bmprova;
@@ -50,6 +52,9 @@ int main(int c, char *argv[]) {
 	printf("Mapping\n");
 	printf("Size of BYTE :%d\n",(int)sizeof(BYTE));
 	printf("Size of U_64_BYTE :%d\n",(int)sizeof(U_64_BYTE));
+	dump_mapping(mapper,sizeof(bmprova.slide1));
+	set_bit(mapper,bit_activation);
+	getchar();
 	dump_mapping(mapper,sizeof(bmprova.slide1));
 	printf("%lu\n",(unsigned long) bmprova.slide1);
 	printf("Long Long size :%llu %llu %llu %llu\n",(unsigned long long)sizeof(long),(unsigned long long)sizeof(long),(unsigned long long)exp2(sizeof(long)*8),(unsigned long long)exp2(sizeof(long long)*8));

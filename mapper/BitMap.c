@@ -20,3 +20,14 @@ void dump_mapping(U_64_BYTE * mapper,int size){
 
 }
 
+/*
+ *
+ * Activate Bit numbered from 0 to max.
+ *
+ */
+void set_bit( U_64_BYTE * ptr, unsigned int bitnumber) {
+	unsigned char *byte_ptr=NULL;
+	byte_ptr=(unsigned char*) (&ptr->byte[GET_BYTES_INDEX(bitnumber)]);
+	*byte_ptr=(*byte_ptr)|ACTIVATE(bitnumber);
+	printf("Activation Bit %d\n",ACTIVATE(bitnumber));
+}
