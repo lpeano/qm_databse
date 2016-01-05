@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS= -c -Wall -Werror -fPIC  
 SHLIB=  -shared -o 
 
-basepath=/home/lpeano/develompent
+basepath=/home/lpeano/qm_databse
 local_path=log
 
 flog.o_include=log $(basename)/$(local_path)
@@ -28,19 +28,3 @@ clean:
 install: all 
 	mkdir -p $(basepath)/lib
 	cp *.so $(basepath)/lib	
-
-#LocalPath=/home/lpeano/develompent/log
-#CC=gcc
-#CFLAGS= -c -Wall -Werror -fPIC
-#SHLIB=  -shared -o 
-#
-#all: clean flog.o libflog.so 
-#
-#libflog.so: flog.o
-#	$(CC) $(SHLIB) $(LocalPath)/libflog.so $(LocalPath)/flog.o
-#
-#flog.o:
-#	$(CC) $(CFLAGS)	$(LocalPath)/flog.c -o $(LocalPath)/flog.o
-#
-#clean: 
-#	rm -f $(LocalPath)/*.o $(LocalPath)/*.so

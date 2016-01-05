@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS= -c -Wall -Werror -fPIC  
 SHLIB=  -shared -o 
 
-basepath=/home/lpeano/develompent
+basepath=/home/lpeano/qm_databse
 local_path=shmeme_block
 
 shmem_blk.o_include=log $(basename)/$(local_path)

@@ -1,5 +1,5 @@
 MAKE=make
-base_path=/home/lpeano/develompent
+base_path=/home/lpeano/qm_databse
 
 #mk_all=$(foreach rule,$(testlogger_rules), $(MAKE)  -C $(test_logger_path) -f Makefile $(rule);)
 #mk_all=$(foreach rule,$(testlogger_rules), $(MAKE) -C $(testlogger_path) $(rule);)
