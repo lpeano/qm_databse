@@ -1,41 +1,0 @@
-
-shmeme_block/shmem_blk.h,131
-#define SHM__BLOCK__2,21
-typedef struct block 3,42
-	unsigned long 		blk_id;4,65
-	void *			buffer[buffer5,122
-} t_block;6,160
-
-shmeme_block/shmem_linked_list.h,144
-#define SHM_LINKED_LIST3,47
-struct linked_list 4,71
-	t_block 		block;5,92
-	t_block 		*t_prev;t_prev6,140
-	t_block  		*t_next;t_next8,226
-
-shmeme_block/shmem_blk.c,19
-int init_blk(9,97
-
-log/flog.h,130
-#define  _LOG_LEVELS2,21
-#define LOG_INFO 4,43
-#define LOG_LOGVERBOSE 5,71
-#define LOG_DEBUG1 6,105
-#define LOG_DEBUG2	7,135
-
-log/flog.c,329
-#define _LOGING__2,18
-#define  _LOG_LEVELS7,97
-#define LOG_INFO 9,119
-#define LOG_LOGVERBOSE 10,147
-#define LOG_DEBUG1 11,181
-#define LOG_DEBUG2	12,211
-static char *decoded_level[decoded_level14,241
-int log_level 21,341
-int fd_log 22,367
-FILE *stream_log=stream_log23,385
-void flog 26,416
-int init_log_level(40,658
-
-test/testlogger.c,15
-int main(3,19
