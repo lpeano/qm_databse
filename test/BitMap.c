@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <flog.h>
 #include <string.h>
 #include <BitMap.h>
 typedef struct {
-	unsigned long slide1; 
+	long long slide1; 
 	unsigned long slide2;
 }Bitmap;	
 /*
@@ -19,11 +20,11 @@ typedef struct bit {
 	unsigned char BIT7:1;
 }BYTE;
 
-typedef struct u_64_byte {
-	BYTE byte[64];
-} U_64_BYTE;
+typedef struct u_1024_byte {
+	BYTE byte[1024];
+} U_1024_BYTE;
 
-void dump_mapping(U_64_BYTE * mapper,int size){
+void dump_mapping(U_1024_BYTE * mapper,int size){
 	int Bcount,bcount;
 	unsigned char *bita,bit;
 	printf("Mapping \n 0 1 2 3 4 5 6 7\n");
@@ -41,17 +42,18 @@ void dump_mapping(U_64_BYTE * mapper,int size){
 int main(int c, char *argv[]) {
 	Bitmap bmprova;
 	unsigned int bit_activation=0;
-	U_64_BYTE *mapper=(U_64_BYTE *)NULL;
+	U_1024_BYTE *mapper=(U_1024_BYTE *)NULL;
 	
+	init_log_level(LOG_DEBUG4);
 	bmprova.slide1=atol(argv[1]);
 	bit_activation=atoi(argv[2]);
 	bmprova.slide2=(unsigned long)0;
 	printf("DATA %lu\n",(unsigned long) bmprova.slide1);
-	mapper= (U_64_BYTE * ) &bmprova;
+	mapper= (U_1024_BYTE * ) &bmprova;
 
 	printf("Mapping\n");
 	printf("Size of BYTE :%d\n",(int)sizeof(BYTE));
-	printf("Size of U_64_BYTE :%d\n",(int)sizeof(U_64_BYTE));
+	printf("Size of U_1024_BYTE :%d\n",(int)sizeof(U_1024_BYTE));
 	dump_mapping(mapper,sizeof(bmprova.slide1));
 	set_bit(mapper,bit_activation);
 	getchar();

@@ -19,13 +19,13 @@ typedef struct bit {
 
 /*
  *
- * 64 byte bit mapper
+ * 1024 byte bit mapper
  *
  */
 
-typedef struct u_64_byte {
-	BYTE byte[64];
-} U_64_BYTE;
+typedef struct u_1024_byte {
+	BYTE byte[1024];
+} U_1024_BYTE;
 
 #ifndef _BIT_MAPPER_MACROS
 #define _BIT_MAPPER_MACROS
@@ -45,7 +45,8 @@ typedef struct u_64_byte {
 
 #endif
 
-extern void dump_mapping(U_64_BYTE * ,int );
-extern void set_bit( U_64_BYTE * , unsigned int);
+extern void dump_mapping(U_1024_BYTE * ,int );
+extern void set_bit( U_1024_BYTE * , unsigned int);
+extern void unset_bit( U_1024_BYTE * , unsigned int);
 
 
