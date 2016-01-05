@@ -17,7 +17,7 @@ BitMap_rules=clean BitMap
 all_modules_dep_list=log
 testlogger_module_dep_list=log
 testmemory_module_dep_list=log shmeme_block
-BitMap_module_dep_list=log BitMap shmeme_block
+BitMap_module_dep_list=log mapper shmeme_block
 
 mk_all=$(foreach rule,$($@_rules), $(MAKE) -C $($@_path) $(rule);)
 mk_all_module=$(foreach module,$($@_module_dep_list), $(MAKE) -C $(base_path)/$(module) install;)

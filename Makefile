@@ -29,4 +29,11 @@ BitMap:
 	$(mk_all)
 	mkdir -p $(base_path)/bin
 	cp test/$@  $(base_path)/bin
-
+clean-all-objects:
+	@echo ""
+	@echo "**********************************************************************************************************"
+	@echo "****************************************Starting making $@"
+	@echo "**********************************************************************************************************"
+	@echo "Removing objects" 
+	@find mapper log shmeme_block test -name '*.so' -exec rm -f {} \; -printf "File %p removed\n" 
+	@find mapper log shmeme_block test -name '*.o' -exec rm -f {} \; -printf "File %p removed\n" 

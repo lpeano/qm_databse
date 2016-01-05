@@ -1,9 +1,9 @@
 CC=gcc
-basepath=/home/lpeano/qm_databset
+basepath=/home/lpeano/qm_databse
 
 BitMap.o_include=mapper
-BitMap_link_dir=mapper
-BitMap_link=BitMap log
+BitMap_link_dir=mapper log
+BitMap_link=BitMap flog
 
 testlogger.o_include=log
 testlogger_link_dir=log
