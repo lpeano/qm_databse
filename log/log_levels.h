@@ -1,5 +1,6 @@
 #ifndef  _LOG_LEVELS_
 #define  _LOG_LEVELS_
+#define LOG_ERROR        -0x000001
 #define LOG_INFO         0x000001
 #define LOG_LOGVERBOSE   0x000002
 #define LOG_DEBUG1       0x000003

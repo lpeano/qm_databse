@@ -1,13 +1,13 @@
 CC=gcc
-CFLAGS= -c -Wall -Werror -fPIC  
+CFLAGS= -c  -Wall -Werror -fPIC  
 SHLIB=  -shared -o 
 
 basepath=/home/lpeano/qm_databse
 local_path=shmeme_block
 
-shmem_blk.o_include=log $(basename)/$(local_path)
-shmem_blk_link_dir=log
-shmem_blk_link=flog 
+shmem_blk.o_include=log mapper $(basename)/$(local_path)
+shmem_blk_link_dir=log BitMap
+shmem_blk_link=flog
 
 link_flags_path=$(foreach dir,$($@_link_dir), -L$(basepath)/$(dir))
 #link_flags=$(foreach dir,$($@_link), -l$(dir))

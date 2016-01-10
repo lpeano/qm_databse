@@ -53,7 +53,10 @@ void flog ( int level, char *message, ...) {
 		va_start(ap,message);
 		//vfprintf(stream_log,message,ap);
 		vsnprintf(buffer,1000,message,ap);
-		fprintf(stream_log," [ %s ] - [ %s ] : %s\n",get_file_time(),decoded_level[level-1],buffer);
+		if( level <0 )
+		       	fprintf(stream_log," [ %s ] - [ %s ] : %s\n",get_file_time(),"LOG_ERROR",buffer);
+		else
+			fprintf(stream_log," [ %s ] - [ %s ] : %s\n",get_file_time(),decoded_level[level-1],buffer);
 		va_end(ap);
 		fflush(stream_log);
 
