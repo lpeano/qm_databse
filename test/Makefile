@@ -11,7 +11,7 @@ testlogger_link=flog
 
 testmemory.o_include=log shmeme_block mapper
 testmemory_link_dir=log shmeme_block mapper
-testmemory_link=flog shmem_blk BitMap
+testmemory_link=flog shmem_blk BitMap chunk_management
 
 link_flags_path=$(foreach dir,$($@_link_dir), -L$(basepath)/$(dir))
 link_flags=$(foreach dir,$($@_link), -l$(dir))
