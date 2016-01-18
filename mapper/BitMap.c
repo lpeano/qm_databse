@@ -41,8 +41,9 @@ void set_bit( U_1024_BYTE * ptr, unsigned int bitnumber) {
 //void unset_bit( U_1024_BYTE * ptr, unsigned int bitnumber) {
 void unset_bit( U_1024_BYTE * ptr, unsigned int bitnumber) {
 	unsigned  char *byte_ptr=NULL;
+	flog(LOG_DEBUG4,"Deactivating bit %llu ... \b",bitnumber);
 	byte_ptr=(unsigned char*) (&ptr->byte[GET_BYTES_INDEX(bitnumber)]);
-	(*byte_ptr)^=ACTIVATE(bitnumber);
-	flog(LOG_DEBUG4,"Activating bit %llu\n",bitnumber);
+	(*byte_ptr)&=DEACTIVATE(bitnumber);
+	flog(LOG_DEBUG4,"Deactivated bit %llu\n",bitnumber);
 }
 

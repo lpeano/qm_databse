@@ -16,6 +16,7 @@
 #define N_BITMAP		8
 #define BLOCK_BITMAP_SIZE (sizeof(U_1024_BYTE)*N_BITMAP)
 #define BLOCK_BITMAP_BITS_SIZE (sizeof(U_1024_BYTE)*N_BITMAP*8)
+
 typedef struct block_header {
 	unsigned long long	blk_id;   	                        /* Unique blocl identifier */
 	size_t			blk_size; 	                        /* Size of block in Bytes */
@@ -44,7 +45,13 @@ typedef struct block {
  * Get pointer to Nth block of area X
  */
 #define GET_BLOCK( N, X, blk_size)   	((unsigned char* ) (v_shm_ptrs[X])+ (N*blk_size))
-
+#define GET_INDEX_BITMAP(__x) (__x<1024)?0:(__x/1024)
+#define GET_BLK_BIT( ptr, n) ({\
+		                typeof(ptr) __pt=(ptr);\
+		                typeof(n) __c=(n);\
+		                typeof(n) __x=(n);\
+		                __x=GET_INDEX_BITMAP((unsigned long )__c);\
+		                (unsigned char) GET_BIT((__pt+__x),__c%1024);})
 
 extern int init_blk( t_block * ,size_t ,unsigned long long );
 
@@ -52,8 +59,8 @@ extern size_t init_shmem_block( int, int , size_t );
 
 /* Get free chunk bytes list in buffer */
 /* Parameters  t_block *blk,int buffer_size , unsigned long *ptr */
-extern long reclaim_free_byte_in_bitmap( t_block *,int  , long *);
-extern long reclaim_free_block_space ( unsigned long area,unsigned long block_count, unsigned  long space, unsigned long blocksize);
+extern long reclaim_free_byte_in_bitmap( t_block *,int );
+extern long reclaim_free_block_space ( unsigned long , unsigned long , unsigned  long , unsigned long , void *);
 
 extern key_t shm_key[];	
 extern int   shm_id;	/* SharedMemory Identifier */ 

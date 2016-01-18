@@ -1,0 +1,1 @@
+ipcrm -m $(ipcs -m|egrep -v "key|-"|awk '{ print $2 }')

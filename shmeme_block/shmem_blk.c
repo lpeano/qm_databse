@@ -13,6 +13,8 @@
 #include <chunks.h>
 #include <BitMap.h>
 #include <stdlib.h>
+#include <shmem_blk.h>
+#include <chunk_management.h>
 /* 
  * This function initialize newely created block 
  *
@@ -36,6 +38,8 @@ t_block *v_shm_ptrs[1000];
 
 int init_blk( t_block *blk ,size_t block_size,unsigned long long block_id)
 {
+	int c=0;
+
 	/* To be implemented */
 	blk->block_header.blk_size=block_size;
 	blk->block_header.free_space=block_size-sizeof(t_block_header);
@@ -51,6 +55,13 @@ int init_blk( t_block *blk ,size_t block_size,unsigned long long block_id)
 	*((unsigned char *)&blk->block_header.Chunk_BitMap[5])&=(unsigned char) 0X00;
 	*((unsigned char *)&blk->block_header.Chunk_BitMap[6])&=(unsigned char) 0X00;
 	*((unsigned char *)&blk->block_header.Chunk_BitMap[7])&=(unsigned char) 0X00;
+	for(c=0;c<sizeof(blk->block_header.Chunk_BitMap);c++) {
+		flog(LOG_DEBUG4,"Bitmap offset %lu",GET_INDEX_BITMAP((c)));
+		unset_bit((U_1024_BYTE*)(&blk->block_header.Chunk_BitMap[GET_INDEX_BITMAP((c))]),(c)%1024);
+	}
+	//for( c=block_size ;c>blk->block_header.free_space;c--) {
+		
+	//}
 	return(0);
 }
 /*
@@ -64,7 +75,7 @@ size_t blk_area_size[1000];
  *
  *
  */
-long reclaim_free_byte_in_bitmap( t_block *blk,int buffer_size , long *ptr) {
+long reclaim_free_byte_in_bitmap( t_block *blk,int buffer_size ) {
 	/*
 	 *
 	 *	Searching chunk_size + buffer size-1 bytes
@@ -73,16 +84,17 @@ long reclaim_free_byte_in_bitmap( t_block *blk,int buffer_size , long *ptr) {
 	int chun_minimum_size=sizeof(t_chunk);
 	unsigned long bit;
 	U_1024_BYTE *BitMap_ptr=NULL;
-	long *tmp_ptr=ptr;
+
 	BitMap_ptr=(U_1024_BYTE *) blk->block_header.Chunk_BitMap;
 	unsigned long c=0,number_of_bytes=0;
-	for (c=0;c<BLOCK_BITMAP_SIZE;c++) {
+	CH *last;
+	for (c=0;(c<BLOCK_BITMAP_BITS_SIZE) && (number_of_bytes<buffer_size);c++) {
 		/* Locking for minimum chunks bytes  */
 		long n=0;
-		flog(LOG_DEBUG4,"Starting searching reclaimed %lu bytes from bitmap pointer %lu of %lu",buffer_size,c,BLOCK_BITMAP_SIZE);
+		flog(LOG_DEBUG4,"Starting searching reclaimed %lu bytes from bitmap pointer %lu of %lu",buffer_size,c,BLOCK_BITMAP_BITS_SIZE);
 		flog(LOG_DEBUG4,"Minimum chunk size is %lu",(unsigned long)sizeof(t_chunk));
 		for(n=0;n<chun_minimum_size;n++,c++) {
-			bit=GET_BIT(BitMap_ptr,c);	
+			bit=GET_BLK_BIT(BitMap_ptr,c);	
 			flog(LOG_DEBUG4,"Getting bit number c:%lu n:%ld=> %lu for chunk",c,n,bit);
 			if(bit==1) {
 				n=n*(-1);
@@ -94,32 +106,31 @@ long reclaim_free_byte_in_bitmap( t_block *blk,int buffer_size , long *ptr) {
 			 * now continuing after allocating
 			 */ 
 			flog(LOG_DEBUG4,"Matched minimum chunk size");
-			long m=n;
-			for(m=n; m>=0 ;m--) {
-				*tmp_ptr=c-m;
-				flog(LOG_DEBUG4,"Putting (%lu) %lu to %20p",m,*tmp_ptr,tmp_ptr);
-				tmp_ptr++;
-
-			}
+			/* Variable bitmap allcoator */
+			last=(CH *) get_last();
+			if( last==(CH *) NULL) {
+				flog(LOG_ERROR,"Last ch pointer is NULL !!! Somthinkg goes bad!!!");
+			}	
+			last->start=c-n;	/* Set first pointer in buffer */
+			last->size=n;		/* Set actual size in buffer   */
 			number_of_bytes=1;
 			c++;
 			/*
 			 * Now allocating remaining values
 			 *
 			 */
-			if( number_of_bytes==(buffer_size) ) {
-				return (number_of_bytes);	
-			}
-			for(m=c;(number_of_bytes<(buffer_size)) && m<BLOCK_BITMAP_SIZE ;c++,m++) {
-				bit=GET_BIT(BitMap_ptr,m);		
+			long m=c;
+			for(m=c;(number_of_bytes<(buffer_size)) && m<BLOCK_BITMAP_BITS_SIZE ;c++,m++) {
+				bit=GET_BLK_BIT(BitMap_ptr,m);	
 				flog(LOG_DEBUG4,"Getting %lu on BitMap value is %lu number of bytes %lu max number of bytes %lu",m,bit,number_of_bytes,buffer_size);
 				if(bit==1) {
 					n=-1;
+					/* Add new chunk elment */
+					add_ch( last->ch_number+1,last->blk_id, 0, 0 ); 
 					flog(LOG_DEBUG4,"After bit number %lu no chunk founded restart finding creating new chunk",c);
 				} else {
-					*tmp_ptr=c;
 					flog(LOG_DEBUG4,"Getting new byte at offset %lu for buffer_size:%lu number_of_bytes:%lu",c,buffer_size,number_of_bytes);
-					tmp_ptr++;
+					last->size++; 
 					number_of_bytes++;
 					if( number_of_bytes==(buffer_size) ) {
 						return (number_of_bytes);	
@@ -131,7 +142,7 @@ long reclaim_free_byte_in_bitmap( t_block *blk,int buffer_size , long *ptr) {
 			flog(LOG_DEBUG4,"After bit number %lu no chunk founded",c);
 		}
 	}
-	return(number_of_bytes);
+	return((-1));
 }
 
 /*
@@ -140,38 +151,81 @@ long reclaim_free_byte_in_bitmap( t_block *blk,int buffer_size , long *ptr) {
  *
  *
  */
-long reclaim_free_block_space ( unsigned long area,unsigned long bcount, unsigned  long space, unsigned long block_size) {
+long reclaim_free_block_space ( unsigned long area,unsigned long bcount, unsigned  long space, unsigned long block_size,void *buffer) {
 	t_block *block=(t_block *)NULL;
-	long *bitmap_free=NULL;
-	int Inactive_flag=-1;
-	unsigned long c=0;
+	long ret_recl;
+	t_chunk *chunk_ptr=(t_chunk *) NULL;
+
 
 	block=(t_block *)GET_BLOCK(bcount,area,block_size);
 	flog(LOG_DEBUG4,"Block number %lu  of size %10lu is pointed by %p",bcount,block_size,(char *) block);
 	flog(LOG_DEBUG4,"Free space in block : %llu",block->block_header.free_space);
-	if( (space*1.4) <= block->block_header.free_space ) {
+	if( (space+sizeof(t_chunk)) <= block->block_header.free_space ) {
 		flog(LOG_DEBUG4,"Block space is appropriate to allocate %lu bytes",space);	
-		if((bitmap_free=(long *)malloc(BLOCK_BITMAP_BITS_SIZE*sizeof(long)))==NULL) {
-			flog(LOG_ERROR,"Error allocating bitmap_free map (%s) of size %lu",strerror(errno),space);
-		} 
-		flog(LOG_DEBUG4,"Setting %lu bytes in temporary bitmap",BLOCK_BITMAP_SIZE);
-		memset((long*)bitmap_free, Inactive_flag, BLOCK_BITMAP_BITS_SIZE*sizeof(long));
-
 		/* Critical region start here */
-		reclaim_free_byte_in_bitmap(block,space,(long *) bitmap_free);	
+		
+		/* Initing first list element */
+		if( int_ch(1,bcount)<0) {
+			flog(LOG_ERROR,"Error allocating first ch in reclaim_free_block_space %s",strerror(errno));
+			return(-1);
+		} else {
+			flog(LOG_DEBUG4,"Allocated CH_PTR first chunk to %20p",CH_PTR);
+		}	
+		if((ret_recl=reclaim_free_byte_in_bitmap(block,space))<0) {
+			flog(LOG_ERROR,"Error in Funciont reclaim_free_byte_in_bitmap\n\tRecalining %lu bytes retriving return code %ld",space,ret_recl);
+			delete_ch();	/* Garbage Collection */
+			return (-2);
+		} else {
+			flog(LOG_DEBUG3,"Function reclaim_free_byte_in_bitmap reclaiming %lu returned %ld",space,ret_recl);
+			debug_dump_ch();
+			set_bit((U_1024_BYTE*)(&block->block_header.Chunk_BitMap[GET_INDEX_BITMAP(CH_PTR->start)]),CH_PTR->start%1024);
+			set_bit((U_1024_BYTE*)(&block->block_header.Chunk_Record_BitMap[GET_INDEX_BITMAP(CH_PTR->start)]),CH_PTR->start%1024);
+			do{
+				int c;
+				for(c=0;c<CH_PTR->size;c++) {
+					flog(LOG_DEBUG4,"Bitmap offset %lu",GET_INDEX_BITMAP((CH_PTR->start+c)));
+					set_bit((U_1024_BYTE*)(&block->block_header.Chunk_BitMap[GET_INDEX_BITMAP((CH_PTR->start+c))]),(CH_PTR->start+c)%1024);
+					block->block_header.free_space--;
+				}
+				int chn=0;
+				/* Copy data tu buffer */
+				chunk_ptr=(t_chunk*)(block->buffer+CH_PTR->start+chn);
+				chunk_ptr->chunk_id=CH_PTR->ch_number;
+				chunk_ptr->chunk_size=CH_PTR->size;
+				chunk_ptr->next=-1;
+				for(chn=(CH_PTR->start+sizeof(t_chunk));chn<CH_PTR->size;chn++) {
+					*((char *) chunk_ptr->data_buffer+chn)=*((char *) buffer+chn);
+				}
+				if(CH_PTR->next!=(CH*) NULL) { 
+					chunk_ptr->next=(CH_PTR->next)->start;
+				}
+			} while (CH_PTR->next!=(CH*) NULL);
+			delete_ch();	/* Garbage Collection */
+		}	
 		/* Critical region terminate here */
-		for(c=0; *(bitmap_free+c)>-1;c++) {
-			flog(LOG_DEBUG4,"%ld value %ld ",c, (long ) *((long *)bitmap_free+c));
-		}
-		free(bitmap_free);
-
 	} else {
 		flog(LOG_DEBUG4,"Block space is inappropriete to allocate %lu bytes",space);
-		return (block->block_header.free_space-space);
+		return ((block->block_header.free_space-space));
 	}
 
 	return(0);
 }
+/*
+long release_block_space(unsigned long area , unisgned long bcount, unsigned long chunk_id ) {
+	t_block *block=(t_block *) NULL;
+	t_chunk chunk;
+
+	block=(t_block *)GET_BLOCK(bcount,area,block_size);		
+	flog(LOG_DEBUG4,"Block number %lu  of size %10lu is pointed by %p",bcount,block_size,(char *) block);
+	flog(LOG_DEBUG4,"Free space in block : %llu",block->block_header.free_space);
+	if(get_chunk_addr(block,chunk_id)>0) {
+		flog(LOG_DEBUG4,"Chunk id %lu founded in block",chunk_id);
+		flog(LOG_DEBUG4,"Starting parsing chunk list");
+	} else {
+		flog(LOG_ERROR,"No chunk id %lu founded in block",chunk_id);
+	}
+	return(0);
+}a*/
 
 /*
  * Templete memory allocation.
@@ -197,10 +251,13 @@ size_t init_shmem_block( int area, int block_number, size_t block_size ) {
 	blk_area_size[area]=block_size;
 	total_memeory_size=block_number*block_size+(sizeof(t_block)*block_number);
 	shm_key[area]=ftok("/tmp",area);
-	if((v_shm_id[area]=shmget(shm_key[area],total_memeory_size,IPC_CREAT|PERM))<0) {
+	flog(LOG_DEBUG2,"Shared Memeory Key is : %LX",shm_key[area]);
+	if((v_shm_id[area]=shmget(shm_key[area],total_memeory_size,SHM_NORESERVE|IPC_CREAT|PERM))<0) {
 		flog(LOG_DEBUG2,"Returning from shmget errno is %d error %s ",errno,strerror(errno));
 		flog(LOG_DEBUG2,"Retrying with not creation\n");
-		if((v_shm_id[area]=shmget(shm_key[area],total_memeory_size,PERM)<=0)) {
+		shm_key[area]=ftok("/tmp",area);
+		flog(LOG_DEBUG2,"Shared Memeory Key is : %LX",shm_key[area]);
+		if((v_shm_id[area]=shmget(shm_key[area],total_memeory_size,SHM_NORESERVE|IPC_CREAT|PERM)<0)) {
 			flog(LOG_DEBUG2,"Returning from shmget errno is %d error %s \n",errno,strerror(errno));
 			return(-1);
 		} else {
@@ -224,6 +281,7 @@ size_t init_shmem_block( int area, int block_number, size_t block_size ) {
 		shmptrtmp=v_shm_ptrs[area];
 		flog(LOG_DEBUG3,"Memory Mapping for area %d is %10p\n",area,v_shm_ptrs[area]);
 		while (c<block_number && init_b_flag==1) {
+			flog(LOG_INFO,"Resetting all bloxks");
 			init_blk(shmptrtmp,block_size,c);
 			flog(LOG_DEBUG4,"Block %d dump\n",c);
 			flog(LOG_DEBUG4,"Block size :%lu\n",(unsigned long )block_size);
@@ -243,3 +301,4 @@ size_t init_shmem_block( int area, int block_number, size_t block_size ) {
 
 	return(total_memeory_size);
 }
+
