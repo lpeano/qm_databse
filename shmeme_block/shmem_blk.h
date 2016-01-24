@@ -45,13 +45,15 @@ typedef struct block {
  * Get pointer to Nth block of area X
  */
 #define GET_BLOCK( N, X, blk_size)   	((unsigned char* ) (v_shm_ptrs[X])+ (N*blk_size))
-#define GET_INDEX_BITMAP(__x) (__x<1024)?0:(__x/1024)
+#define GET_INDEX_BITMAP(__x) (int) (__x<8)?0:(__x/8)
 #define GET_BLK_BIT( ptr, n) ({\
 		                typeof(ptr) __pt=(ptr);\
 		                typeof(n) __c=(n);\
 		                typeof(n) __x=(n);\
 		                __x=GET_INDEX_BITMAP((unsigned long )__c);\
-		                (unsigned char) GET_BIT((__pt+__x),__c%1024);})
+				unsigned char *x_pt=(unsigned char*) __pt+__x;\
+		                (unsigned char) GET_BIT(((U_1024_BYTE*)x_pt),__c);})
+		                //(unsigned char) GET_BIT((__pt+__x),__c%1024);})
 
 extern int init_blk( t_block * ,size_t ,unsigned long long );
 

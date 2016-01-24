@@ -60,13 +60,25 @@ int add_ch( unsigned long ch_number,unsigned long blk_id, unsigned long start, u
 int delete_ch() {
 	CH * tmp_ch;
 	tmp_ch=CH_PTR;
-	while(tmp_ch->next!=(CH*)NULL) {
-		tmp_ch=tmp_ch->next;
-	}	
-	while( CH_PTR!=tmp_ch) {
-		tmp_ch=tmp_ch->prev;
-		free((CH*) tmp_ch->next);
-	}
+	flog(LOG_DEBUG3,"Caling delete_ch");
+	do {
+		if( tmp_ch->next !=(CH*) NULL)
+		       	tmp_ch=tmp_ch->next;
+	}while(tmp_ch->next!=(CH*)NULL); 
+	flog(LOG_DEBUG3,"Starting to delete from tail queue");
+	do{
+
+		if(tmp_ch->prev!=(CH*)NULL) { tmp_ch=tmp_ch->prev;}
+		if(tmp_ch->next != (CH*) NULL) {
+			flog(LOG_DEBUG4,"tmp_ch pointer is %20p",tmp_ch);
+			flog(LOG_DEBUG4,"Removig ch pointer %20p",tmp_ch->next);
+			(tmp_ch->next)->prev=(CH*) NULL;
+			free((CH*) (tmp_ch->next));
+			tmp_ch->next=(CH*) NULL;
+		}
+	}while(CH_PTR!=tmp_ch);
+	flog(LOG_DEBUG3,"Removing ch pointer %20p",CH_PTR);
+	CH_PTR->next=(CH*) NULL;
 	free((CH*) CH_PTR);
 	return(0);
 }
@@ -93,6 +105,7 @@ void debug_dump_ch() {
 		flog(LOG_DEBUG4,"DUMPING CH STRUCTURE LIST");
 		do{
 			flog(LOG_DEBUG4,"Pointer to element :%20p ch_number : %lu\n\t\tptr->prev:%20p ptr->next:%20p\n\t\tptr->start:%lu ptr->size:%lu",tmp,tmp->ch_number,tmp->prev,tmp->next,tmp->start,tmp->size);
+			if(tmp->next!=(CH*) NULL) tmp=tmp->next;
 		}while(tmp->next!=(CH *) NULL);
 	}
 }

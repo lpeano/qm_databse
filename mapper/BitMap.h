@@ -35,8 +35,8 @@ typedef struct u_1024_byte {
  * 	Get_Bitmap_Value
  *
  */
-#define ACTIVATE(__N) 	(unsigned char ) ((0x01)<<(__N%8))
-#define DEACTIVATE(__N)  (unsigned char ) (~((0x01)<<(__N%8)))
+#define ACTIVATE(__N) 	(unsigned char ) ((0x01U)<<(__N%8))
+#define DEACTIVATE(__N)  (unsigned char ) (~((0x01U)<<(__N%8)))
 #define GET_BYTES_INDEX(__x) (__x<8)?0: (__x/0x08) 
 #define GET_BIT(__ptr,__n) (unsigned char ) *((unsigned char*) (&(__ptr->byte[GET_BYTES_INDEX(__n)])))>>(__n%8)&(0x01)
 
@@ -50,7 +50,7 @@ typedef struct u_1024_byte {
 #endif
 
 extern void dump_mapping(U_1024_BYTE * ,int );
-extern void set_bit( U_1024_BYTE * , unsigned int);
-extern void unset_bit( U_1024_BYTE * , unsigned int);
-
+extern void set_bit( U_1024_BYTE * , unsigned long);
+extern void unset_bit( U_1024_BYTE * , unsigned long);
+extern unsigned char get_bit(U_1024_BYTE *, unsigned long );
 
